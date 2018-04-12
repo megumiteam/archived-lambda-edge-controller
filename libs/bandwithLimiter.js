@@ -1,6 +1,6 @@
 const defaultCFClass = require('./cloudfront')
 
-class bandwithLimiter {
+class BandwithLimiter {
   /**
    * constructor
    *
@@ -37,7 +37,7 @@ class bandwithLimiter {
           'detachBandwithLimit'
         )
         const params = this.createUpdateDistributionParam(data, config)
-        return this.cloudfront.updateDistribution(params).promise()
+        return this.cloudfront.updateDistribution(params)
       })
   }
   /**
@@ -56,7 +56,7 @@ class bandwithLimiter {
           'attachBandwithLimit'
         )
         const params = this.createUpdateDistributionParam(data, config)
-        return this.cloudfront.updateDistribution(params).promise()
+        return this.cloudfront.updateDistribution(params)
       })
   }
   /**
@@ -149,4 +149,4 @@ class bandwithLimiter {
   }
 }
 
-module.exports = bandwithLimiter
+module.exports = BandwithLimiter

@@ -27,7 +27,7 @@ class cloudfront {
    * @return {Promise} result of cloudfront.updateDistribution api
    **/
   updateDistribution (params) {
-    return cloudfront.updateDistribution(params).promise()
+    return this.cloudfront.updateDistribution(params).promise()
   }
 }
 

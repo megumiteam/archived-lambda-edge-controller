@@ -1,4 +1,4 @@
 module.exports = {
-  bandwithLimiter: require('./libs/bandwithLimiter'),
+  BandwithLimiter: require('./libs/bandwithLimiter'),
   hello: () => 'hello world!'
 }

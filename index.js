@@ -1,5 +1,4 @@
 module.exports = {
-  hello: () => 'hello world!',
-  removeBandwithLimitLambda: () => 'removeBandwithLimitLambda',
-  attachBandwithLimitLambda: () => 'attachBandwithLimitLambda'
+  bandwithLimiter: require('./libs/bandwithLimiter'),
+  hello: () => 'hello world!'
 }

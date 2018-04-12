@@ -41,6 +41,25 @@ class bandwithLimiter {
       })
   }
   /**
+   * Attach bandwithLimiter lambda from CloudFront Distribution
+   *
+   * @param {string} distributionId - CloudFront Distribution ID
+   * @return {Promise} results of the workflow
+   **/
+  attachBandWithLambdaWf (distributionId) {
+    return this.cloudfront
+      .getCloudFrontDistribution(distributionId)
+      .then(data => {
+        const distribution = data.Distribution
+        const config = this.createUpdateDistributionConfig(
+          distribution.DistributionConfig,
+          'attachBandwithLimit'
+        )
+        const params = this.createUpdateDistributionParam(data, config)
+        return this.cloudfront.updateDistribution(params).promise()
+      })
+  }
+  /**
    * Generate update CloudFront distribution params
    *
    * @param {object} data - cloudfront.getCloudFrontDistribution results
@@ -99,7 +118,9 @@ class bandwithLimiter {
       if (
         item.EventType === 'viewer-request' &&
         this.isBandwithLimitLambdaArn(item.LambdaFunctionARN)
-      ) { return }
+      ) {
+        return
+      }
       return newLambdaItems.push(item)
     })
     lambdas.Quantity = newLambdaItems.length

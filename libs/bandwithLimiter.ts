@@ -30,6 +30,12 @@ class BandwithLimiter {
   getLambdaArn (): string {
     return this.lambdaArn
   }
+  getStage(): 'production' | 'development' {
+    return this.stage
+  }
+  getClient(): CloudFront {
+    return this.cloudfront
+  }
   /**
    * Detach bandwithLimiter lambda from CloudFront Distribution
    *
@@ -158,3 +164,4 @@ class BandwithLimiter {
 }
 
 module.exports = BandwithLimiter
+export default BandwithLimiter

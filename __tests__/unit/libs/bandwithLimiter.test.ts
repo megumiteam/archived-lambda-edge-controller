@@ -1,5 +1,6 @@
-const assert = require('power-assert')
-const BandwithLimiter = require('../../../dist/bandwithLimiter')
+import { CloudFront } from 'aws-sdk'
+import assert = require('assert');
+import BandwithLimiter from '../../../libs/bandwithLimiter'
 
 class DummyClass {}
 
@@ -7,31 +8,31 @@ describe('libs/bandwithLimiter.js', () => {
   describe('constructor', () => {
     it('should set development stage when given no params', () => {
       const c = new BandwithLimiter('lambdaArn')
-      assert.equal(c.stage, 'development')
+      assert.equal(c.getStage(), 'development')
     })
     it('should set development stage when given development string', () => {
       const c = new BandwithLimiter('lambdaArn', 'development')
-      assert.equal(c.stage, 'development')
+      assert.equal(c.getStage(), 'development')
     })
     it('should set development stage when given invalid string', () => {
       const c = new BandwithLimiter('lambdaArn', 'hogehoge')
-      assert.equal(c.stage, 'development')
+      assert.equal(c.getStage(), 'development')
     })
     it('should set production stage when given production string', () => {
       const c = new BandwithLimiter('lambdaArn', 'production')
-      assert.equal(c.stage, 'production')
+      assert.equal(c.getStage(), 'production')
     })
     it('should set valid arn', () => {
       const c = new BandwithLimiter('lambdaArn')
-      assert.equal(c.lambdaArn, 'lambdaArn')
+      assert.equal(c.getLambdaArn(), 'lambdaArn')
     })
     it('should set dummy class', () => {
-      const c = new BandwithLimiter('lambdaArn', 'hogehoge', new DummyClass())
-      assert.equal(c.cloudfront instanceof DummyClass, true)
+      const c = new BandwithLimiter('lambdaArn', 'hogehoge', new DummyClass() as CloudFront)
+      assert.equal(c.getClient() instanceof DummyClass, true)
     })
   })
   describe('methods', () => {
-    let c
+    let c: any
     beforeEach(() => {
       c = new BandwithLimiter('bandwith-lambda-arn')
     })

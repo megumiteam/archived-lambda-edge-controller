@@ -2,7 +2,7 @@
   "name": "lambda-edge-controller",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "jest",
     "lint": "eslint .",
@@ -16,7 +16,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/megumiteam/lambda-edge-controller/issues"
   },

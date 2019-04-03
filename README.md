@@ -36,6 +36,11 @@ limitter.attachEdgeFunction('DIST_ID')
 limitter.detachEdgeFunction('DIST_ID')
   .then(result => console.log(result))
 
+// You can change target event type
+limitter.updateEventType('origin-request')
+  .attachEdgeFunction('DIST_ID')
+  .then(result => console.log(result))
+
 ```
 
 ## Development

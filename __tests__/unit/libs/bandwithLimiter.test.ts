@@ -41,6 +41,15 @@ describe('libs/bandwithLimiter.js', () => {
         assert.equal(c.getLambdaArn(), 'bandwith-lambda-arn')
       })
     })
+    describe('#updateEventType()', () => {
+      it('should return default event type', () => {
+        assert.equal(c.getTargetEventType(), 'viewer-request')
+      })
+      it('should update event type', () => {
+        c.updateEventType('origin-request')
+        assert.equal(c.getTargetEventType(), 'origin-request')
+      })
+    })
     describe('#createUpdateDistributionParam()', () => {
       const data = {
         Distribution: {

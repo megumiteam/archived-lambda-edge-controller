@@ -9,6 +9,7 @@ class BandwithLimiter {
   private stage: 'production' | 'development'
   private lambdaArn: string
   private cloudfront: CloudFront
+  protected eventType: CloudFront.Types.EventType = 'viewer-request'
   /**
    * constructor
    *
@@ -34,6 +35,14 @@ class BandwithLimiter {
   }
   getClient(): CloudFront {
     return this.cloudfront
+  }
+
+  updateEventType(type: CloudFront.Types.EventType): this {
+    this.eventType = type
+    return this
+  }
+  getTargetEventType(): CloudFront.Types.EventType {
+    return this.eventType
   }
   /**
    * Reove lambda edge function from specific CloudFront Distribution
@@ -155,7 +164,7 @@ class BandwithLimiter {
     lambdas.Items.forEach(item => {
       if (!item.EventType) return
       if (
-        item.EventType === 'viewer-request' &&
+        item.EventType === this.eventType &&
         this.isTargetLambdaArn(item.LambdaFunctionARN)
       ) {
         return
@@ -189,7 +198,7 @@ class BandwithLimiter {
     const lambdas: CloudFront.Types.LambdaFunctionAssociations = defaultCacheBehavior.LambdaFunctionAssociations || defaultLambdaFunctionAssociations
     const newItem = {
       LambdaFunctionARN: this.getLambdaArn(),
-      EventType: 'viewer-request'
+      EventType: this.eventType
     }
     if (!lambdas.Items) {
       lambdas.Items = [newItem]

@@ -1,12 +1,13 @@
-const AWS = require('aws-sdk')
+import AWS from 'aws-sdk'
 
-class cloudfront {
+class Cloudfront {
+  protected cloudfront: AWS.CloudFront;
   /**
    * constructor
    *
    **/
-  constructor () {
-    this.cloudfront = new AWS.CloudFront()
+  constructor (client: AWS.CloudFront = new AWS.CloudFront()) {
+    this.cloudfront = client
   }
   /**
    * Get CloudFront Distribution
@@ -14,7 +15,7 @@ class cloudfront {
    * @param {string} distributionId - CloudFront Distribution ID
    * @return {Promise} result of cloudfront.getDistribution api
    **/
-  getCloudFrontDistribution (distributionId) {
+  getCloudFrontDistribution (distributionId: string): Promise<AWS.CloudFront.Types.GetDistributionConfigResult> {
     const param = {
       Id: distributionId
     }
@@ -26,9 +27,9 @@ class cloudfront {
    * @param {object} params - update params
    * @return {Promise} result of cloudfront.updateDistribution api
    **/
-  updateDistribution (params) {
+  updateDistribution (params: AWS.CloudFront.Types.UpdateDistributionRequest): Promise<AWS.CloudFront.Types.UpdateDistributionResult> {
     return this.cloudfront.updateDistribution(params).promise()
   }
 }
-
-module.exports = cloudfront
+module.exports = Cloudfront
+export default Cloudfront

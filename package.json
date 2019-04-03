@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/_mocha tests/ -R spec --recursive",
+    "test": "npm run build && node_modules/mocha/bin/_mocha tests/ -R spec --recursive",
     "lint": "eslint .",
     "precommit": "lint-staged",
     "format": "prettier-eslint --write \"libs/**/*.js\" \"index.js\"",
-    "integration-test": "jest"
+    "integration-test": "jest",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,5 @@
 const assert = require('power-assert')
-const BandwithLimiter = require('../../../libs/bandwithLimiter')
+const BandwithLimiter = require('../../../dist/bandwithLimiter')
 
 class dummyClass {}
 

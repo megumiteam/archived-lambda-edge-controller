@@ -1,6 +1,15 @@
+import { CloudFront } from 'aws-sdk'
 const defaultCFClass = require('./cloudfront')
 
+const defaultLambdaFunctionAssociations: CloudFront.Types.LambdaFunctionAssociations  = {
+  Quantity: 0,
+  Items: []
+}
+
 class BandwithLimiter {
+  private stage: 'production' | 'development'
+  private lambdaArn: string
+  private cloudfront: CloudFront
   /**
    * constructor
    *
@@ -8,17 +17,17 @@ class BandwithLimiter {
    * @param {string} [stage='development'] - stage
    * @param {Class} CloudFront - AWS SDK class of CloudFront
    **/
-  constructor (lambdaArn, stage = 'development', CloudFront = defaultCFClass) {
+  constructor (lambdaArn: string, stage: string = 'development', cf: CloudFront = new CloudFront()) {
     this.stage = stage === 'production' ? stage : 'development'
     this.lambdaArn = lambdaArn
-    this.cloudfront = new CloudFront()
+    this.cloudfront = cf
   }
   /**
    * get lambda arn
    *
    * @return {string} lambda arn
    **/
-  getLambdaArn () {
+  getLambdaArn (): string {
     return this.lambdaArn
   }
   /**
@@ -27,18 +36,15 @@ class BandwithLimiter {
    * @param {string} distributionId - CloudFront Distribution ID
    * @return {Promise} results of the workflow
    **/
-  detachBandWithLambdaWf (distributionId) {
-    return this.cloudfront
-      .getCloudFrontDistribution(distributionId)
-      .then(data => {
-        const distribution = data.Distribution
-        const config = this.createUpdateDistributionConfig(
-          distribution.DistributionConfig,
-          'detachBandwithLimit'
-        )
-        const params = this.createUpdateDistributionParam(data, config)
-        return this.cloudfront.updateDistribution(params)
-      })
+  async detachBandWithLambdaWf (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
+    const data = await this.cloudfront.getDistribution({Id: distributionId}).promise()
+    if (!data.Distribution) throw new Error('No such distribution')
+    const config = await this.createUpdateDistributionConfig(
+      data.Distribution.DistributionConfig,
+      'detachBandwithLimit'
+    )
+    const params = this.createUpdateDistributionParam(data, config)
+    return this.cloudfront.updateDistribution(params).promise()
   }
   /**
    * Attach bandwithLimiter lambda from CloudFront Distribution
@@ -46,18 +52,15 @@ class BandwithLimiter {
    * @param {string} distributionId - CloudFront Distribution ID
    * @return {Promise} results of the workflow
    **/
-  attachBandWithLambdaWf (distributionId) {
-    return this.cloudfront
-      .getCloudFrontDistribution(distributionId)
-      .then(data => {
-        const distribution = data.Distribution
-        const config = this.createUpdateDistributionConfig(
-          distribution.DistributionConfig,
-          'attachBandwithLimit'
-        )
-        const params = this.createUpdateDistributionParam(data, config)
-        return this.cloudfront.updateDistribution(params)
-      })
+  async attachBandWithLambdaWf (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
+    const data = await this.cloudfront.getDistribution({Id: distributionId}).promise()
+    if (!data || !data.Distribution) throw new Error('No such distribution')
+    const config = await this.createUpdateDistributionConfig(
+      data.Distribution.DistributionConfig,
+      'attachBandwithLimit'
+    )
+    const params = this.createUpdateDistributionParam(data, config)
+    return this.cloudfront.updateDistribution(params).promise()
   }
   /**
    * Generate update CloudFront distribution params
@@ -66,7 +69,8 @@ class BandwithLimiter {
    * @param {object} config - updated distribution config
    * @return {object} update distribution param
    **/
-  createUpdateDistributionParam (data, config) {
+  createUpdateDistributionParam (data: CloudFront.GetDistributionResult, config: CloudFront.Types.DistributionConfig): CloudFront.UpdateDistributionRequest {
+    if (!data || !data.Distribution) throw new Error('No such distribution')
     const distribution = data.Distribution
     const params = {
       Id: distribution.Id,
@@ -82,7 +86,7 @@ class BandwithLimiter {
    * @param {string} action - update action type
    * @return {Promise} results of the workflow
    **/
-  createUpdateDistributionConfig (config, action) {
+  createUpdateDistributionConfig (config: CloudFront.Types.DistributionConfig, action: string): CloudFront.Types.DistributionConfig {
     switch (action) {
       case 'detachBandwithLimit':
         return this.detachBandwithLimitLambda(config)
@@ -98,7 +102,7 @@ class BandwithLimiter {
    * @param {string} arn - Lambda Arn
    * @return {bool} result
    **/
-  isBandwithLimitLambdaArn (arn) {
+  isBandwithLimitLambdaArn (arn: string): boolean {
     if (this.getLambdaArn() === arn) return true
     return false
   }
@@ -108,11 +112,11 @@ class BandwithLimiter {
    * @param {object} config - CloudFront distribution config
    * @return {object} updated distribution config
    **/
-  detachBandwithLimitLambda (config) {
+  detachBandwithLimitLambda (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
     const defaultCacheBehavior = config.DefaultCacheBehavior
-    const lambdas = defaultCacheBehavior.LambdaFunctionAssociations
-    if (lambdas.Quantity < 1) return config
-    const newLambdaItems = []
+    const lambdas: CloudFront.Types.LambdaFunctionAssociations = defaultCacheBehavior.LambdaFunctionAssociations || defaultLambdaFunctionAssociations
+    if (lambdas.Quantity < 1 || !lambdas.Items) return config
+    const newLambdaItems: CloudFront.Types.LambdaFunctionAssociationList = []
     lambdas.Items.forEach(item => {
       if (!item.EventType) return
       if (
@@ -134,15 +138,19 @@ class BandwithLimiter {
    * @param {object} config - CloudFront distribution config
    * @return {object} updated distribution config
    **/
-  attachBandwithLimitLambda (config) {
+  attachBandwithLimitLambda (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
     const param = this.detachBandwithLimitLambda(config)
     const defaultCacheBehavior = param.DefaultCacheBehavior
-    const lambdas = defaultCacheBehavior.LambdaFunctionAssociations
+    const lambdas: CloudFront.Types.LambdaFunctionAssociations = defaultCacheBehavior.LambdaFunctionAssociations || defaultLambdaFunctionAssociations
     const newItem = {
       LambdaFunctionARN: this.getLambdaArn(),
       EventType: 'viewer-request'
     }
-    lambdas.Items.push(newItem)
+    if (!lambdas.Items) {
+      lambdas.Items = [newItem]
+    } else {
+      lambdas.Items.push(newItem)
+    }
     lambdas.Quantity = lambdas.Items.length
     param.DefaultCacheBehavior.LambdaFunctionAssociations = lambdas
     return param

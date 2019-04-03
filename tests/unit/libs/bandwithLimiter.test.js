@@ -1,7 +1,7 @@
 const assert = require('power-assert')
 const BandwithLimiter = require('../../../dist/bandwithLimiter')
 
-class dummyClass {}
+class DummyClass {}
 
 describe('libs/bandwithLimiter.js', () => {
   describe('constructor', () => {
@@ -26,8 +26,8 @@ describe('libs/bandwithLimiter.js', () => {
       assert.equal(c.lambdaArn, 'lambdaArn')
     })
     it('should set dummy class', () => {
-      const c = new BandwithLimiter('lambdaArn', 'hogehoge', dummyClass)
-      assert.equal(c.cloudfront instanceof dummyClass, true)
+      const c = new BandwithLimiter('lambdaArn', 'hogehoge', new DummyClass())
+      assert.equal(c.cloudfront instanceof DummyClass, true)
     })
   })
   describe('methods', () => {

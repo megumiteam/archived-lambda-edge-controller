@@ -1,5 +1,4 @@
 import { CloudFront } from 'aws-sdk'
-const defaultCFClass = require('./cloudfront')
 
 const defaultLambdaFunctionAssociations: CloudFront.Types.LambdaFunctionAssociations  = {
   Quantity: 0,
@@ -37,12 +36,12 @@ class BandwithLimiter {
     return this.cloudfront
   }
   /**
-   * Detach bandwithLimiter lambda from CloudFront Distribution
+   * Reove lambda edge function from specific CloudFront Distribution
    *
    * @param {string} distributionId - CloudFront Distribution ID
    * @return {Promise} results of the workflow
    **/
-  async detachBandWithLambdaWf (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
+  async detachEdgeFunction (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
     const data = await this.cloudfront.getDistribution({Id: distributionId}).promise()
     if (!data.Distribution) throw new Error('No such distribution')
     const config = await this.createUpdateDistributionConfig(
@@ -53,12 +52,22 @@ class BandwithLimiter {
     return this.cloudfront.updateDistribution(params).promise()
   }
   /**
-   * Attach bandwithLimiter lambda from CloudFront Distribution
+   * Detach bandwithLimiter lambda from CloudFront Distribution
+   *
+   * @param {string} distributionId - CloudFront Distribution ID
+   * @deprecated use detachEdgeFunction instead
+   * @return {Promise} results of the workflow
+   **/
+  async detachBandWithLambdaWf (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
+    return this.detachEdgeFunction(distributionId)
+  }
+  /**
+   * Attach lambda edge function to specific CloudFront Distribution
    *
    * @param {string} distributionId - CloudFront Distribution ID
    * @return {Promise} results of the workflow
    **/
-  async attachBandWithLambdaWf (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
+  async attachEdgeFunction (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
     const data = await this.cloudfront.getDistribution({Id: distributionId}).promise()
     if (!data || !data.Distribution) throw new Error('No such distribution')
     const config = await this.createUpdateDistributionConfig(
@@ -67,6 +76,16 @@ class BandwithLimiter {
     )
     const params = this.createUpdateDistributionParam(data, config)
     return this.cloudfront.updateDistribution(params).promise()
+  }
+  /**
+   * Attach bandwithLimiter lambda from CloudFront Distribution
+   *
+   * @param {string} distributionId - CloudFront Distribution ID
+   * @deprecated use attachEdgeFunction instead
+   * @return {Promise} results of the workflow
+   **/
+  async attachBandWithLambdaWf (distributionId: string): Promise<CloudFront.UpdateDistributionResult> {
+    return this.attachEdgeFunction(distributionId)
   }
   /**
    * Generate update CloudFront distribution params
@@ -108,17 +127,27 @@ class BandwithLimiter {
    * @param {string} arn - Lambda Arn
    * @return {bool} result
    **/
-  isBandwithLimitLambdaArn (arn: string): boolean {
+  protected isTargetLambdaArn (arn: string): boolean {
     if (this.getLambdaArn() === arn) return true
     return false
   }
   /**
-   * update distribution config to detach bandwithLimiter
+   * Check lambda function arn
+   *
+   * @param {string} arn - Lambda Arn
+   * @deprecated use isTargetLambdaArn instead
+   * @return {bool} result
+   **/
+  protected isBandwithLimitLambdaArn (arn: string): boolean {
+    return this.isTargetLambdaArn(arn)
+  }
+  /**
+   * update distribution config to detach target edge function
    *
    * @param {object} config - CloudFront distribution config
    * @return {object} updated distribution config
    **/
-  detachBandwithLimitLambda (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
+  detatchEdgeFunction (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
     const defaultCacheBehavior = config.DefaultCacheBehavior
     const lambdas: CloudFront.Types.LambdaFunctionAssociations = defaultCacheBehavior.LambdaFunctionAssociations || defaultLambdaFunctionAssociations
     if (lambdas.Quantity < 1 || !lambdas.Items) return config
@@ -127,7 +156,7 @@ class BandwithLimiter {
       if (!item.EventType) return
       if (
         item.EventType === 'viewer-request' &&
-        this.isBandwithLimitLambdaArn(item.LambdaFunctionARN)
+        this.isTargetLambdaArn(item.LambdaFunctionARN)
       ) {
         return
       }
@@ -139,12 +168,22 @@ class BandwithLimiter {
     return config
   }
   /**
+   * update distribution config to detach bandwithLimiter
+   *
+   * @param {object} config - CloudFront distribution config
+   * @deprecated use detatchEdgeFunction function instead
+   * @return {object} updated distribution config
+   **/
+  detachBandwithLimitLambda (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
+    return this.detatchEdgeFunction(config)
+  }
+  /**
    * update distribution config to attach bandwithLimiter
    *
    * @param {object} config - CloudFront distribution config
    * @return {object} updated distribution config
    **/
-  attachBandwithLimitLambda (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
+  attatchEdgeFunction (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
     const param = this.detachBandwithLimitLambda(config)
     const defaultCacheBehavior = param.DefaultCacheBehavior
     const lambdas: CloudFront.Types.LambdaFunctionAssociations = defaultCacheBehavior.LambdaFunctionAssociations || defaultLambdaFunctionAssociations
@@ -160,6 +199,16 @@ class BandwithLimiter {
     lambdas.Quantity = lambdas.Items.length
     param.DefaultCacheBehavior.LambdaFunctionAssociations = lambdas
     return param
+  }
+  /**
+   * update distribution config to attach bandwithLimiter
+   *
+   * @param {object} config - CloudFront distribution config
+   * @deprecated use attatchEdgeFunction function instead
+   * @return {object} updated distribution config
+   **/
+  attachBandwithLimitLambda (config: CloudFront.Types.DistributionConfig): CloudFront.Types.DistributionConfig {
+    return this.attatchEdgeFunction(config)
   }
 }
 

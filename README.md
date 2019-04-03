@@ -18,7 +18,7 @@ And run `npm install` command.
 
 ## Usage
 
-```
+```javascript
 // Load libs
 const { BandwithLimiter } = require('lambda-edge-controller')
 
@@ -29,11 +29,11 @@ const lambdaArn = 'arn:aws:lambda:us-east-1:function:{name}:{version}'
 const limitter = new BandwithLimiter(lambdaArn)
 
 // To attach bandwith limitter
-limitter.attachBandwithLimitLambda('DIST_ID')
+limitter.attachEdgeFunction('DIST_ID')
   .then(result => console.log(result))
 
 // To detach bandwith limitter
-limitter.detachBandWithLambdaWf('DIST_ID')
+limitter.detachEdgeFunction('DIST_ID')
   .then(result => console.log(result))
 
 ```

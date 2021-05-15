@@ -35,7 +35,7 @@
   "devDependencies": {
     "@babel/core": "^7.4.3",
     "@types/jest": "^23.3.12",
-    "@types/node": "^10.12.18",
+    "@types/node": "10.17.60",
     "@typescript-eslint/eslint-plugin": "^1.1.1",
     "@typescript-eslint/parser": "^1.1.1",
     "@typescript-eslint/typescript-estree": "^1.1.1",
